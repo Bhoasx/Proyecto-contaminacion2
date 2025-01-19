@@ -1,0 +1,136 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define NUM_ZONAS 5
+#define DIAS_HISTORICOS 30
+
+// Estructuras
+typedef struct {
+    char nombre[50];
+    float CO2;
+    float SO2;
+    float NO2;
+    float PM25;
+} Zona;
+
+typedef struct {
+    float temperatura;
+    float velocidad_viento;
+    float humedad;
+} FactoresClimaticos;
+
+// Prototipos de funciones
+void cargarDatosHistoricos(float historico[][DIAS_HISTORICOS], const char *archivo);
+void guardarReporte(const char *archivo, Zona zonas[], float predicciones[], int num_zonas);
+void calcularPromedioHistorico(float historico[][DIAS_HISTORICOS], float promedios[], int num_zonas);
+void predecirNiveles(Zona zonas[], float historico[][DIAS_HISTORICOS], FactoresClimaticos factores, float predicciones[], int num_zonas);
+void emitirAlertas(Zona zonas[], float predicciones[], int num_zonas);
+void generarRecomendaciones(float predicciones[], int num_zonas);
+
+int main() {
+    Zona zonas[NUM_ZONAS] = {
+        {"Zona 1", 0, 0, 0, 0},
+        {"Zona 2", 0, 0, 0, 0},
+        {"Zona 3", 0, 0, 0, 0},
+        {"Zona 4", 0, 0, 0, 0},
+        {"Zona 5", 0, 0, 0, 0}
+    };
+
+    float historico[NUM_ZONAS][DIAS_HISTORICOS] = {0};
+    float promedios[NUM_ZONAS] = {0};
+    float predicciones[NUM_ZONAS] = {0};
+
+    FactoresClimaticos factores = {25.0, 10.0, 50.0};
+
+    // Cargar datos históricos
+    cargarDatosHistoricos(historico, "historico.txt");
+
+    // Calcular promedios históricos
+    calcularPromedioHistorico(historico, promedios, NUM_ZONAS);
+
+    // Predicción de niveles futuros
+    predecirNiveles(zonas, historico, factores, predicciones, NUM_ZONAS);
+
+    // Emitir alertas si es necesario
+    emitirAlertas(zonas, predicciones, NUM_ZONAS);
+
+    // Generar recomendaciones
+    generarRecomendaciones(predicciones, NUM_ZONAS);
+
+    // Guardar reporte en archivo
+    guardarReporte("reporte.txt", zonas, predicciones, NUM_ZONAS);
+
+    return 0;
+}
+
+void cargarDatosHistoricos(float historico[][DIAS_HISTORICOS], const char *archivo) {
+    FILE *file = fopen(archivo, "r");
+    if (!file) {
+        printf("Error al abrir el archivo de datos históricos.\n");
+        return;
+    }
+
+    for (int i = 0; i < NUM_ZONAS; i++) {
+        for (int j = 0; j < DIAS_HISTORICOS; j++) {
+            fscanf(file, "%f", &historico[i][j]);
+        }
+    }
+
+    fclose(file);
+}
+
+void guardarReporte(const char *archivo, Zona zonas[], float predicciones[], int num_zonas) {
+    FILE *file = fopen(archivo, "w");
+    if (!file) {
+        printf("Error al guardar el archivo de reporte.\n");
+        return;
+    }
+
+    fprintf(file, "Reporte de Monitoreo y Predicción de Contaminación\n\n");
+    for (int i = 0; i < num_zonas; i++) {
+        fprintf(file, "%s - Predicción: %.2f\n", zonas[i].nombre, predicciones[i]);
+    }
+
+    fclose(file);
+}
+
+void calcularPromedioHistorico(float historico[][DIAS_HISTORICOS], float promedios[], int num_zonas) {
+    for (int i = 0; i < num_zonas; i++) {
+        float suma = 0;
+        for (int j = 0; j < DIAS_HISTORICOS; j++) {
+            suma += historico[i][j];
+        }
+        promedios[i] = suma / DIAS_HISTORICOS;
+    }
+}
+
+void predecirNiveles(Zona zonas[], float historico[][DIAS_HISTORICOS], FactoresClimaticos factores, float predicciones[], int num_zonas) {
+    for (int i = 0; i < num_zonas; i++) {
+        float suma = 0;
+        int peso_total = 0;
+        for (int j = 0; j < DIAS_HISTORICOS; j++) {
+            int peso = DIAS_HISTORICOS - j; // Mayor peso a los días recientes
+            suma += historico[i][j] * peso;
+            peso_total += peso;
+        }
+        predicciones[i] = suma / peso_total; // Promedio ponderado
+    }
+}
+
+void emitirAlertas(Zona zonas[], float predicciones[], int num_zonas) {
+    for (int i = 0; i < num_zonas; i++) {
+        if (predicciones[i] > 100.0) { // Límite de ejemplo
+            printf("ALERTA: %s superará los niveles aceptables (%.2f).\n", zonas[i].nombre, predicciones[i]);
+        }
+    }
+}
+
+void generarRecomendaciones(float predicciones[], int num_zonas) {
+    printf("\nRecomendaciones:\n");
+    for (int i = 0; i < num_zonas; i++) {
+        if (predicciones[i] > 100.0) {
+            printf("- Reducir tráfico vehicular y actividades industriales en la Zona %d.\n", i + 1);
+        }
+    }
+}
