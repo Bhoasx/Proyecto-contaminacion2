@@ -1,0 +1,103 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_ZONAS 3
+#define MAX_DIAS 10
+
+typedef struct {
+    char nombre[50];
+    float co2;
+    float so2;
+    float no2;
+    float pm25;
+} Zona;
+
+Zona zonas[MAX_ZONAS];
+int total_zonas = 0;
+
+void limpiar_buffer() {
+    while (getchar() != '\n');
+}
+
+void registrar_zona() {
+    if (total_zonas >= MAX_ZONAS) {
+        printf("\nNo se pueden registrar mas zonas.\n");
+        return;
+    }
+
+    printf("\nIngrese el nombre de la zona: ");
+    limpiar_buffer();
+    fgets(zonas[total_zonas].nombre, 50, stdin);
+    zonas[total_zonas].nombre[strcspn(zonas[total_zonas].nombre, "\n")] = 0;
+    total_zonas++;
+    printf("\nZona registrada correctamente.\n");
+}
+
+void registrar_datos() {
+    if (total_zonas == 0) {
+        printf("\nNo hay zonas registradas.\n");
+        return;
+    }
+
+    int zona_idx;
+    printf("\nSeleccione una zona (0-%d): ", total_zonas - 1);
+    if (scanf("%d", &zona_idx) != 1 || zona_idx < 0 || zona_idx >= total_zonas) {
+        printf("\nIndice de zona no valido.\n");
+        limpiar_buffer();
+        return;
+    }
+
+    printf("\nIngrese los niveles de contaminantes para la zona %s:\n", zonas[zona_idx].nombre);
+
+    printf("CO2: ");
+    scanf("%f", &zonas[zona_idx].co2);
+    printf("SO2: ");
+    scanf("%f", &zonas[zona_idx].so2);
+    printf("NO2: ");
+    scanf("%f", &zonas[zona_idx].no2);
+    printf("PM2.5: ");
+    scanf("%f", &zonas[zona_idx].pm25);
+}
+
+void mostrar_datos() {
+    if (total_zonas == 0) {
+        printf("\nNo hay zonas registradas.\n");
+        return;
+    }
+
+    printf("\nDatos registrados:\n");
+    for (int i = 0; i < total_zonas; i++) {
+        printf("Zona %s: CO2: %.2f, SO2: %.2f, NO2: %.2f, PM2.5: %.2f\n",
+               zonas[i].nombre, zonas[i].co2, zonas[i].so2, zonas[i].no2, zonas[i].pm25);
+    }
+}
+
+void menu() {
+    int opcion;
+    do {
+        printf("\n--- Sistema de Contaminacion ---\n");
+        printf("1. Registrar nueva zona\n");
+        printf("2. Registrar datos de contaminacion\n");
+        printf("3. Mostrar datos registrados\n");
+        printf("4. Salir\n");
+        printf("Seleccione una opcion: ");
+        if (scanf("%d", &opcion) != 1) {
+            printf("\nEntrada invalida.\n");
+            limpiar_buffer();
+            continue;
+        }
+
+        switch (opcion) {
+            case 1: registrar_zona(); break;
+            case 2: registrar_datos(); break;
+            case 3: mostrar_datos(); break;
+            case 4: printf("\nSaliendo del sistema.\n"); break;
+            default: printf("\nOpcion no valida.\n");
+        }
+    } while (opcion != 4);
+}
+
+int main() {
+    menu();
+    return 0;
+}
